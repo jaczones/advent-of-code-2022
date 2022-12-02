@@ -1,48 +1,102 @@
 package main
 
 import (
-	"bufio"
+	"encoding/csv"
 	"fmt"
+	"io"
+	"log"
 	"os"
-	"sort"
-	"strconv"
 )
 
 func main() {
-	getHighestCalories(readLines("input1.txt"))
+	getScorePart1(readFromCSV())
+	getScorePart2(readFromCSV())
 }
 
-func getHighestCalories(countPerElf []int) {
-	var highest int
-	var currentCount int
-	var totals []int
-	for _, item := range countPerElf {
-		if item != 0 {
-			currentCount = currentCount + item
-			if currentCount > highest {
-				highest = currentCount
+func getScorePart1(rounds [][]string) {
+	total := 0
+	for _, row := range rounds {
+		elfThrow := row[0]
+		myThrow := row[1]
+		if myThrow == "X" {
+			total += 1
+			if elfThrow == "A" {
+				total += 3
+			} else if elfThrow == "C" {
+				total += 6
+			}
+		} else if myThrow == "Y" {
+			total += 2
+			if elfThrow == "A" {
+				total += 6
+			} else if elfThrow == "B" {
+				total += 3
 			}
 		} else {
-			totals = append(totals, currentCount)
-			currentCount = 0
+			total += 3
+			if elfThrow == "B" {
+				total += 6
+			} else if elfThrow == "C" {
+				total += 3
+			}
 		}
 	}
-	sort.Ints(totals)
-	fmt.Printf("Solution 1: %v \n", totals[len(totals)-1])
-	fmt.Printf("Solution 2: %v \n", totals[len(totals)-1]+totals[len(totals)-2]+totals[len(totals)-3])
+	fmt.Printf("Part 1 score: %v \n", total)
 }
 
-func readLines(path string) []int {
-	file, err := os.Open(path)
-	var lines []int
+func getScorePart2(rounds [][]string) {
+	total := 0
+	for _, row := range rounds {
+		elfThrow := row[0]
+		result := row[1]
+		if result == "X" {
+			if elfThrow == "A" {
+				total += 3
+			} else if elfThrow == "B" {
+				total += 1
+			} else if elfThrow == "C" {
+				total += 2
+			}
+		} else if result == "Y" {
+			total += 3
+			if elfThrow == "A" {
+				total += 1
+			} else if elfThrow == "B" {
+				total += 2
+			} else if elfThrow == "C" {
+				total += 3
+			}
+		} else {
+			total += 6
+			if elfThrow == "A" {
+				total += 2
+			} else if elfThrow == "B" {
+				total += 3
+			} else if elfThrow == "C" {
+				total += 1
+			}
+		}
+	}
+	fmt.Printf("Part 2 score: %v \n", total)
+}
+
+func readFromCSV() [][]string {
+	f, err := os.Open("data.csv")
+	var rows [][]string
 	if err != nil {
-		return nil
+		log.Fatal(err)
 	}
-	defer file.Close()
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		i, _ := strconv.Atoi(scanner.Text())
-		lines = append(lines, i)
+	defer f.Close()
+	csvReader := csv.NewReader(f)
+	for {
+		rec, err := csvReader.Read()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			log.Fatal(err)
+		}
+		rows = append(rows, rec)
 	}
-	return lines
+	return rows
 }
