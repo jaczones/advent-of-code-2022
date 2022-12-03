@@ -1,102 +1,70 @@
 package main
 
 import (
-	"encoding/csv"
+	"bufio"
 	"fmt"
-	"io"
-	"log"
 	"os"
+
+	"golang.org/x/exp/slices"
 )
 
+var values = []string{"0", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"}
+
 func main() {
-	getScorePart1(readFromCSV())
-	getScorePart2(readFromCSV())
+	part1(readLines("input.txt"))
+	part2(readLines("input.txt"))
 }
 
-func getScorePart1(rounds [][]string) {
+func part2(rucksacks []string) {
 	total := 0
-	for _, row := range rounds {
-		elfThrow := row[0]
-		myThrow := row[1]
-		if myThrow == "X" {
-			total += 1
-			if elfThrow == "A" {
-				total += 3
-			} else if elfThrow == "C" {
-				total += 6
-			}
-		} else if myThrow == "Y" {
-			total += 2
-			if elfThrow == "A" {
-				total += 6
-			} else if elfThrow == "B" {
-				total += 3
-			}
-		} else {
-			total += 3
-			if elfThrow == "B" {
-				total += 6
-			} else if elfThrow == "C" {
-				total += 3
+	for i := 0; i < len(rucksacks); i++ {
+		group := []string{rucksacks[i], rucksacks[i+1], rucksacks[i+2]}
+		elf1, elf2, elf3 := group[0], group[1], group[2]
+		var priority int
+		for _, i := range elf1 {
+			for _, j := range elf2 {
+				for _, k := range elf3 {
+					if i == j && j == k {
+						priority = slices.Index(values, string(i))
+					}
+				}
 			}
 		}
+		total += priority
+		i += 2
 	}
-	fmt.Printf("Part 1 score: %v \n", total)
+	fmt.Println(total)
 }
 
-func getScorePart2(rounds [][]string) {
+func part1(rucksacks []string) {
 	total := 0
-	for _, row := range rounds {
-		elfThrow := row[0]
-		result := row[1]
-		if result == "X" {
-			if elfThrow == "A" {
-				total += 3
-			} else if elfThrow == "B" {
-				total += 1
-			} else if elfThrow == "C" {
-				total += 2
-			}
-		} else if result == "Y" {
-			total += 3
-			if elfThrow == "A" {
-				total += 1
-			} else if elfThrow == "B" {
-				total += 2
-			} else if elfThrow == "C" {
-				total += 3
-			}
-		} else {
-			total += 6
-			if elfThrow == "A" {
-				total += 2
-			} else if elfThrow == "B" {
-				total += 3
-			} else if elfThrow == "C" {
-				total += 1
+	for _, rucksack := range rucksacks {
+		half := len(rucksack) / 2
+		first := rucksack[:half]
+		second := rucksack[half:]
+		var priority int
+		for _, i := range first {
+			for _, j := range second {
+				if i == j {
+					priority = slices.Index(values, string(i))
+				}
 			}
 		}
+		total += priority
 	}
-	fmt.Printf("Part 2 score: %v \n", total)
+	fmt.Println(total)
 }
 
-func readFromCSV() [][]string {
-	f, err := os.Open("data.csv")
-	var rows [][]string
+func readLines(path string) []string {
+	file, err := os.Open(path)
+	var lines []string
 	if err != nil {
-		log.Fatal(err)
+		return nil
 	}
-	defer f.Close()
-	csvReader := csv.NewReader(f)
-	for {
-		rec, err := csvReader.Read()
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			log.Fatal(err)
-		}
-		rows = append(rows, rec)
+	defer file.Close()
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		lines = append(lines, scanner.Text())
 	}
-	return rows
+	return lines
 }
