@@ -1,70 +1,61 @@
 package main
 
 import (
-	"bufio"
+	"encoding/csv"
 	"fmt"
+	"io"
+	"log"
 	"os"
-
-	"golang.org/x/exp/slices"
+	"strconv"
+	"strings"
 )
 
-var values = []string{"0", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"}
-
 func main() {
-	part1(readLines("input.txt"))
-	part2(readLines("input.txt"))
+	part1(readCSV())
 }
 
-func part2(rucksacks []string) {
-	total := 0
-	for i := 0; i < len(rucksacks); i++ {
-		group := []string{rucksacks[i], rucksacks[i+1], rucksacks[i+2]}
-		elf1, elf2, elf3 := group[0], group[1], group[2]
-		var priority int
-		for _, i := range elf1 {
-			for _, j := range elf2 {
-				for _, k := range elf3 {
-					if i == j && j == k {
-						priority = slices.Index(values, string(i))
-					}
-				}
-			}
+func part1(rows [][]string) {
+	count := 0
+	count2 := 0
+	for _, rec := range rows {
+		elf1 := strings.Split(string(rec[0]), "-")
+		elf2 := strings.Split(string(rec[1]), "-")
+		elf1start, _ := strconv.Atoi(elf1[0])
+		elf1end, _ := strconv.Atoi(elf1[1])
+		elf2start, _ := strconv.Atoi(elf2[0])
+		elf2end, _ := strconv.Atoi(elf2[1])
+		if elf1start <= elf2start && elf1end >= elf2end {
+			count++
+		} else if elf2start <= elf1start && elf2end >= elf1end {
+			count++
+		} else if elf1start == elf2start && elf1end == elf2end {
+			count++
 		}
-		total += priority
-		i += 2
-	}
-	fmt.Println(total)
-}
-
-func part1(rucksacks []string) {
-	total := 0
-	for _, rucksack := range rucksacks {
-		half := len(rucksack) / 2
-		first := rucksack[:half]
-		second := rucksack[half:]
-		var priority int
-		for _, i := range first {
-			for _, j := range second {
-				if i == j {
-					priority = slices.Index(values, string(i))
-				}
-			}
+		if elf1end >= elf2start && elf2end >= elf1start {
+			count2++
 		}
-		total += priority
 	}
-	fmt.Println(total)
+	fmt.Println("Part 1: ", count)
+	fmt.Println("Part 2: ", count2)
 }
 
-func readLines(path string) []string {
-	file, err := os.Open(path)
-	var lines []string
+func readCSV() [][]string {
+	f, err := os.Open("data.csv")
+	var rows [][]string
 	if err != nil {
-		return nil
+		log.Fatal(err)
 	}
-	defer file.Close()
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		lines = append(lines, scanner.Text())
+	defer f.Close()
+	csvReader := csv.NewReader(f)
+	for {
+		rec, err := csvReader.Read()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			log.Fatal(err)
+		}
+		rows = append(rows, rec)
 	}
-	return lines
+	return rows
 }
