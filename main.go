@@ -1,61 +1,71 @@
 package main
 
 import (
-	"encoding/csv"
+	"bufio"
 	"fmt"
-	"io"
-	"log"
 	"os"
+	"regexp"
 	"strconv"
-	"strings"
 )
 
+var crate = make(map[int]string)
+
 func main() {
-	part1(readCSV())
+	lines := readLines("input.txt")
+	instructions := readLines("instructions.txt")
+	part1(lines, instructions)
 }
 
-func part1(rows [][]string) {
-	count := 0
-	count2 := 0
-	for _, rec := range rows {
-		elf1 := strings.Split(string(rec[0]), "-")
-		elf2 := strings.Split(string(rec[1]), "-")
-		elf1start, _ := strconv.Atoi(elf1[0])
-		elf1end, _ := strconv.Atoi(elf1[1])
-		elf2start, _ := strconv.Atoi(elf2[0])
-		elf2end, _ := strconv.Atoi(elf2[1])
-		if elf1start <= elf2start && elf1end >= elf2end {
-			count++
-		} else if elf2start <= elf1start && elf2end >= elf1end {
-			count++
-		} else if elf1start == elf2start && elf1end == elf2end {
-			count++
+func part1(lines []string, instructions []string) {
+	makeCrateMap(lines)
+	parseStrings(instructions)
+	fmt.Println(crate)
+}
+
+func parseStrings(instructions []string) {
+	for _, line := range instructions {
+		str1 := line
+		re := regexp.MustCompile(`[-]?\d[\d,]*[\.]?[\d{2}]*`)
+
+		submatchall := re.FindAllString(str1, -1)
+		var nums []int
+		for _, element := range submatchall {
+			num, _ := strconv.Atoi(element)
+			nums = append(nums, num)
 		}
-		if elf1end >= elf2start && elf2end >= elf1start {
-			count2++
-		}
+		moveCrate(nums[0], nums[1], nums[2])
 	}
-	fmt.Println("Part 1: ", count)
-	fmt.Println("Part 2: ", count2)
 }
 
-func readCSV() [][]string {
-	f, err := os.Open("data.csv")
-	var rows [][]string
+func moveCrate(amount int, from int, to int) {
+	var s string
+	for i := 1; i <= amount; i++ {
+		s = string(crate[from][len(crate[from])-1])
+		fmt.Println(s)
+		crate[from] = crate[from][:len(crate[from])-1]
+		crate[to] = crate[to] + s
+	}
+}
+
+func makeCrateMap(lines []string) map[int]string {
+	count := 1
+	for _, line := range lines {
+		crate[count] = line
+		count++
+	}
+	return crate
+}
+
+func readLines(path string) []string {
+	file, err := os.Open(path)
+	var lines []string
 	if err != nil {
-		log.Fatal(err)
+		return nil
 	}
-	defer f.Close()
-	csvReader := csv.NewReader(f)
-	for {
-		rec, err := csvReader.Read()
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			log.Fatal(err)
-		}
-		rows = append(rows, rec)
+	defer file.Close()
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		lines = append(lines, scanner.Text())
 	}
-	return rows
+	return lines
 }
