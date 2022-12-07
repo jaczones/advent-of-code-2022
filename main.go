@@ -13,10 +13,6 @@ var crate = make(map[int]string)
 func main() {
 	lines := readLines("input.txt")
 	instructions := readLines("instructions.txt")
-	part1(lines, instructions)
-}
-
-func part1(lines []string, instructions []string) {
 	makeCrateMap(lines)
 	parseStrings(instructions)
 	fmt.Println(crate)
@@ -38,12 +34,18 @@ func parseStrings(instructions []string) {
 }
 
 func moveCrate(amount int, from int, to int) {
-	var s string
-	for i := 1; i <= amount; i++ {
-		s = string(crate[from][len(crate[from])-1])
-		fmt.Println(s)
-		crate[from] = crate[from][:len(crate[from])-1]
-		crate[to] = crate[to] + s
+	var stack string
+	if amount > 1 {
+		stack = string(crate[from][len(crate[from])-amount:])
+		remaining := string(crate[from][:len(crate[from])-amount])
+		crate[from] = remaining
+		crate[to] = crate[to] + stack
+	} else {
+		for i := 1; i <= amount; i++ {
+			stack = string(crate[from][len(crate[from])-1])
+			crate[from] = crate[from][:len(crate[from])-1]
+			crate[to] = crate[to] + stack
+		}
 	}
 }
 
